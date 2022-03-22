@@ -8,12 +8,12 @@ from django.db.models import Q
 from PIL import Image
 
 
-def __getSerializableClubInfo(clubID):
+def getSerializableClubInfo(clubID):
     club = models.Club.objects.get(id=clubID)
     users = models.User_Club.objects.filter(club=club)
     serUsers = []
     for i in users:
-        user = models.userBasicInfo.objects.get(id=i.user.id)
+        user = models.User.objects.get(id=i.user.id)
         serUsers.append(models.serializableUser(user.id,user.displayName,user.photoPath,i.owner,i.joined))
     if hasattr(club,'book_of_the_week'):
         bow = club.book_of_the_week
@@ -44,11 +44,11 @@ def createGroup(request):
         return Response(status=status.HTTP_409_CONFLICT)
     
     club = models.Club(name=request.data['name'])
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
     user_club = models.User_Club(user=user,club=club,owner=True)
     club.save()
     user_club.save()
-    return Response(serializer.ClubSerializer(__getSerializableClubInfo(id),many=False,context={'request': request}).data,status=status.HTTP_201_CREATED)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request}).data,status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -57,14 +57,14 @@ def getClubInfo(request,id):
         return Response(status=status.HTTP_404_NOT_FOUND)
     info = models.Club.objects.get(id=id)
     print(info.name)
-    se = serializer.ClubSerializer(__getSerializableClubInfo(id),many=False,context={'request': request})
+    se = serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request})
     return Response(se.data)
 
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated,])
 def joinClub(request,id):
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     if models.User_Club.objects.filter(club=id,user=user).exists():
@@ -72,13 +72,13 @@ def joinClub(request,id):
     club = models.Club.objects.get(id=id)
     user_club = models.User_Club(user=user,club=club,owner=False)
     user_club.save()
-    return Response(serializer.ClubSerializer(__getSerializableClubInfo(id),context={'request': request}).data)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),context={'request': request}).data)
 
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated,])
 def leaveClub(request,id):
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     if not models.User_Club.objects.filter(club=id,user=user).exists():
@@ -89,12 +89,12 @@ def leaveClub(request,id):
     if club_user.owner:
         return Response(status=status.HTTP_403_FORBIDDEN)
     club_user.delete()
-    return Response(serializer.ClubSerializer(__getSerializableClubInfo(id),context={'request': request}).data)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),context={'request': request}).data)
 
 @api_view(['DELETE'])
 @permission_classes([IsAuthenticated,])
 def deleteGroup(request,id):
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     if not models.User_Club.objects.filter(club=id,user=user).exists():
@@ -111,7 +111,7 @@ def deleteGroup(request,id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated,])
 def addBook(request,id):
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
     q = request.GET.get('q','')
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -128,7 +128,7 @@ def addBook(request,id):
     club.book_of_the_week = book
     club.books.add(book)
     club.save()
-    return Response(serializer.ClubSerializer(__getSerializableClubInfo(id),many=False,context={'request': request}).data)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request}).data)
 
 
 

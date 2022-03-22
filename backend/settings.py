@@ -46,6 +46,7 @@ INSTALLED_APPS = [
     'auth_api',
     'user',
     'club',
+    'modely',
 ]
 
 MIDDLEWARE = [

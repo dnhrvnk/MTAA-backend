@@ -1,4 +1,5 @@
 from django.urls import path
+from django.views.decorators.csrf import csrf_exempt
 from . import views
 
 urlpatterns = [
@@ -6,6 +7,5 @@ urlpatterns = [
     path('info/', views.getInfo),
     path('groups/', views.getGroups),
     path('books/', views.getBooks),
-    path('book/', views.bookTolibrary),
-    path('book/', views.bookFromLibrary)
+    path('book/<str:isbn>/', csrf_exempt(views.BookList.as_view())),
 ]

@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from club.models import Club, User_Club,SerializableClub
-from search.models import Book
-from user.models import userBasicInfo
+from modely.models import *
 import uuid
 
 class BookSeriliazer(serializers.Serializer):
@@ -37,5 +36,5 @@ class ClubSerializer(serializers.Serializer):
         child= BookSeriliazer()
     )
     class Meta:
-        model=SerializableClub
+        model = SerializableClub
         fields = '__all__'

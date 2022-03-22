@@ -6,7 +6,7 @@ from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.db.models import Q
 
-from search.models import Book, Genre, Author, Club
+from modely.models import *
 
 
 class AuthorSerialize(serializers.ModelSerializer):
@@ -38,6 +38,9 @@ def testGet(response):
         print(e.name)
     return Response(AuthorSerialize(items,many=True).data)
 
+
+    
+
 @api_view(['GET'])
 def getBooks(request):
     q = request.GET.get('q','')
@@ -49,5 +52,3 @@ def getClubs(request):
     q = request.GET.get('q','')
     clubs = Club.objects.filter(Q(name__contains=q))
     return Response(bookSerialize(clubs, many=True, context={'request': request}).data)
-
-#SAVE?????
