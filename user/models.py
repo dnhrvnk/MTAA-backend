@@ -1,5 +1,4 @@
 from django.db import models
-from rest_framework import serializers
 from django.contrib.auth.base_user import AbstractBaseUser
 import uuid
 
