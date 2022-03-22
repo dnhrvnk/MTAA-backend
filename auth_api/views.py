@@ -17,7 +17,7 @@ def registerUser(request):
     registerData = request.data
     if not validateFields(registerData):
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-    if models.Users.objects.filter(username=registerData['name']).exists():
+    if models.Users.objects.filter(username__iexact=registerData['name']).exists():
         return Response(status=status.HTTP_409_CONFLICT)
 
     user = models.Users(username=registerData['name'],password=registerData['password'],displayName=registerData['name'])
@@ -31,7 +31,7 @@ def registerUser(request):
 def longinUser(request):
     if not validateFields(request.data):
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-    userQ = models.Users.objects.filter(username=request.data['name'], password=request.data['password'])
+    userQ = models.Users.objects.filter(username__iexact=request.data['name'], password=request.data['password'])
     if not userQ.exists():
         return Response(status=status.HTTP_401_UNAUTHORIZED)
     user = userQ.get()

@@ -1,3 +1,4 @@
+import stat
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -147,8 +148,12 @@ def modifyGroup(request,id):
     
     club = models.Club.objects.get(id=id)
     for key,val in request.data.items():
-        if key == 'name' and (val == '' or models.Club.objects.filter(~Q(id=id),name=val)):
-            return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        if key == 'name':
+            if  val == '':
+                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+            if models.Club.objects.filter(~Q(id=id),name__iexact=val).exists():
+                return Response(status=status.HTTP_409_CONFLICT)
+            club.name = val
         elif key == 'info':
             club.info = val if val != "" else None
         elif key == 'rules':
