@@ -1,6 +1,7 @@
 from django.db import models
 from rest_framework import serializers
 from django.contrib.auth.base_user import AbstractBaseUser
+import uuid
 
 
 class Genre(models.Model):
@@ -34,3 +35,18 @@ class Book(models.Model):
     class Meta:
         managed=False
         db_table = 'books'
+
+
+class Club(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid.uuid4, editable=False)
+    name = models.TextField()
+    info = models.TextField() 
+    rules = models.TextField()
+    photoPath = models.ImageField(upload_to='data/clubs')
+    
+    book_of_the_week = models.ManyToManyField(Book, db_table='club_books')
+    #chyba clenovia
+        
+    class Meta:
+        managed=False
+        db_table = 'clubs'

@@ -13,15 +13,13 @@ class BookSeriliazer(serializers.Serializer):
     genre = serializers.CharField()
     pages = serializers.IntegerField()
     cover = serializers.ImageField()
-
-    pass
+ 
 class UserSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     displayName = serializers.CharField()
     photoPath = serializers.ImageField(use_url=True)
     owner = serializers.BooleanField()
     joined = serializers.DateTimeField()
-    pass
 
 class ClubSerializer(serializers.Serializer):   
     id = serializers.UUIDField()
