@@ -12,6 +12,7 @@ from .models import serializabeBook,serializableUser,SerializableClub
 from rest_framework.views import APIView
 from club.serializer import  ClubSerializer
 from club.views import getSerializableClubInfo
+from PIL import Image
 
 class bookSerializer(serializers.Serializer):
     id = serializers.CharField()
@@ -80,13 +81,19 @@ def modifyUser(request):
         if key == 'bio':
             user.bio = val if val != "" else None
         if key == 'photo':
-            user.photoPath.delete()
+            if not 'user.png' in user.photoPath.name:
+                user.photoPath.delete()
             ext = val.name.split('.')[-1]
             val.name = '{:}.{:}'.format(user.id,ext)
             user.photoPath = val
+            try:
+                im = Image.open(user.photoPath)
+                im.verify()
+            except:
+                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
     user.save()
         
-    return Response(status=status.HTTP_200_OK)
+    return Response(userSerialize(serializeUser(user), context = {'request': request}).data,status=status.HTTP_200_OK)
 
 @api_view(['GET'])
 def getInfo(request):

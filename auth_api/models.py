@@ -12,6 +12,7 @@ class Users(AbstractBaseUser):
     password = models.CharField(max_length=200)
     created = models.DateTimeField(auto_now_add=True)
     displayName = models.CharField(max_length=200)
+    photoPath = models.ImageField(upload_to='data/users',default='data/default/user.png')
     last_login = None
 
     @property

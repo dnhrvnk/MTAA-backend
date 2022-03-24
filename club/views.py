@@ -170,7 +170,7 @@ def modifyGroup(request,id):
                 return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
     club.save()
 
-    return Response(serializer.ClubSerializer(__getSerializableClubInfo(id),many=False,context={'request': request}).data)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request}).data)
 
 @api_view(['DeLETE'])
 @permission_classes([IsAuthenticated,])
@@ -193,7 +193,7 @@ def removeMember(request,id):
     if models.User_Club.objects.get(club=id,user=q).owner:
         return Response(status=status.HTTP_403_FORBIDDEN)
     models.User_Club.objects.filter(club=id,user=q).delete()
-    return Response(serializer.ClubSerializer(__getSerializableClubInfo(id),many=False,context={'request': request}).data)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request}).data)
 
 
     
