@@ -1,4 +1,4 @@
-# MTAA zadanie 2
+# MTAA zadanie 2 - backend
 ### Description
 
 
@@ -15,6 +15,16 @@
         "name" : "<db name>",
         "user" : "<user>",
         "pass" : "<password>"
-    }
+    },
+    "hosts": [
+        "<IPaddress>",
+        ...
+    ],
+
+    "salt": "SECRET_KEY"
 }
 ```
+
+### webrtc support
+from tutorial: https://www.youtube.com/watch?v=MBOlZMLaQ8g
+ 
