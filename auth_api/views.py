@@ -30,7 +30,7 @@ def registerUser(request):
 @api_view(['POST'])
 def longinUser(request):
     if not validateFields(request.data):
-        return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+        return Response(status=status.HTTP_401_NOT_ACCEPTABLE)
     userQ = models.Users.objects.filter(username__iexact=request.data['name'], password=request.data['password'])
     if not userQ.exists():
         return Response(status=status.HTTP_401_UNAUTHORIZED)

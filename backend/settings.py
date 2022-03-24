@@ -13,6 +13,11 @@ https://docs.djangoproject.com/en/4.0/ref/settings/
 from pathlib import Path
 import json
 
+
+connection_credentials = {}
+with open("config.json", "r") as jsonfile:
+    connection_credentials = json.load(jsonfile)
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,7 +26,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/4.0/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-&5tac-0e5a-p*4^k6j)v($+tvb&&1t!^2%++nn0e%q25$(!x1r'
+SECRET_KEY = connection_credentials["salt"]
 
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
@@ -41,12 +46,14 @@ INSTALLED_APPS = [
 
     'rest_framework',
     'rest_framework.authtoken',
+    'channels',
     
     'search',
     'auth_api',
     'user',
     'club',
     'modely',
+    'video'
 ]
 
 MIDDLEWARE = [
@@ -79,12 +86,11 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'backend.wsgi.application'
 
+ASGI_APPLICATION = 'backend.asgi.application'
+
 
 # Database
 # https://docs.djangoproject.com/en/4.0/ref/settings/#databases
-connection_credentials = {}
-with open("config.json", "r") as jsonfile:
-    connection_credentials = json.load(jsonfile)
 
 DATABASES = {
     'default': {
@@ -149,3 +155,13 @@ REST_FRAMEWORK = {
       'rest_framework.authentication.TokenAuthentication',
     )
 }
+
+
+CHANNEL_LAYERS = {
+    "default": {
+        "BACKEND": "channels.layers.InMemoryChannelLayer"
+    }
+}
+
+
+ALLOWED_HOSTS = connection_credentials["hosts"]
