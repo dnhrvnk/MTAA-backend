@@ -17,7 +17,7 @@ class SerializableClub:
 class serializableUser:
     def __init__(self,id,displayName,photoPath,owner,joined):
         self.id = id
-        self.displayName= displayName
+        self.displayName = displayName
         self.photoPath = photoPath
         self.owner = owner
         self.joined = joined
@@ -30,4 +30,3 @@ class serializabeBook:
         self.genre = genre
         self.pages = pages
         self.cover = cover
-

@@ -74,7 +74,6 @@ class User_Club(models.Model):
         managed= False
         db_table = 'user_club'
 
-
 class Status(models.Model):
     id = models.CharField(unique=True,primary_key=True,editable=False, max_length=20)
     status_text = models.TextField()
@@ -93,4 +92,3 @@ class user_books(models.Model):
     class Meta:
         managed = False
         db_table = 'user_books'
-

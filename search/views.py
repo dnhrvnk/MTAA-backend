@@ -1,54 +1,40 @@
-from dataclasses import field
-from unicodedata import name
-from django.db import models
-from rest_framework import serializers
+from rest_framework import status
 from rest_framework.response import Response
 from rest_framework.decorators import api_view
 from django.db.models import Q
+from search.serializer import bookSerializer
 
-from modely.models import *
+from user.models import *
+from search.models import *
+from user.views import serializeClubs, serializeRecommendedBooks
+from user.serializer import clubSerializer
+from search.serializer import bookFindSerializer
 
+def serializeBook(book):
+    if user_books.objects.filter(status=Status.objects.get(id = 3)).count() == 0:
+        rating = 0
+    else:
+        rating = user_books.objects.filter(recommended = True).count() / user_books.objects.filter(status=Status.objects.get(id = 3)).count() 
+    readers = user_books.objects.filter(status=Status.objects.get(id = 2)).count() +  user_books.objects.filter(status=Status.objects.get(id = 3)).count()
 
-class AuthorSerialize(serializers.ModelSerializer):
-    class Meta:
-        model = Author
-        fields = '__all__'
-
-class genreSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Genre
-        fields= '__all__'
-
-class bookSerialize(serializers.ModelSerializer):
-    genre = genreSerializer()
-    author = AuthorSerialize(source='get_author',many=True)
-    class Meta:
-        model = Book
-        fields = '__all__'
-
-class clubSerialize(serializers.ModelSerializer):
-    class Meta:
-        model = Club
-        fields = '__all__'
-
-@api_view(['GET'])
-def testGet(response):
-    items = Author.objects.all()
-    for e in items:
-        print(e.name)
-    return Response(AuthorSerialize(items,many=True).data)
-
-
-    
+    return serializableBookInfo(book.id, book.title, book.author, book.genre, book.pages, book.description, book.cover_path, readers, rating)
 
 @api_view(['GET'])
 def getBooks(request):
     q = request.GET.get('q','')
-    books = Book.objects.filter(Q(title__contains=q) | Q(author__name__contains=q))
-    return Response(bookSerialize(books,many=True,context={'request': request}).data)
-
+    books = serializeRecommendedBooks(Book.objects.filter(Q(title__icontains = q) | Q(author__name__icontains = q)), True)
+    return Response(bookFindSerializer(books, context = {'request': request}, many = True).data)
+ 
 @api_view(['GET'])
 def getClubs(request):
     q = request.GET.get('q','')
-    clubs = Club.objects.filter(Q(name__contains=q))
-    return Response(bookSerialize(clubs, many=True, context={'request': request}).data)
+    clubs = serializeClubs(Club.objects.filter(Q(name__icontains = q)), True)
+    return Response(clubSerializer(clubs, context = {'request': request}, many = True).data)
+
+@api_view(['GET'])
+def getInfo(request, isbn):
+    if not Book.objects.filter(id = isbn).exists():
+        return Response(status=status.HTTP_404_NOT_FOUND)
+
+    book = Book.objects.get(id = isbn)
+    return Response(bookSerializer(serializeBook(book), context = {'request': request}).data)
