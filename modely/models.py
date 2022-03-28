@@ -56,7 +56,7 @@ class Club(models.Model):
     name = models.CharField(max_length=200,unique=True,blank=False)
     info = models.TextField()
     rules = models.TextField()
-    photoPath = models.ImageField(upload_to='data/groups',default='data/default/user.png')
+    photoPath = models.ImageField(upload_to='data/groups',default='data/default/group.png')
     book_of_the_week = models.OneToOneField(Book,on_delete=models.PROTECT,db_column='book_of_the_week',related_name='bow')
     books = models.ManyToManyField(Book,db_table='club_books',related_name='books')
     users=models.ManyToManyField(User,through='User_Club')

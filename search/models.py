@@ -5,9 +5,10 @@ class serializableAuthor:
         self.name = name
 
 class serializableGenre:
-    def __init__(self, id, name):
+    def __init__(self, id, name,color):
         self.id = id
         self.name = name
+        self.color = color
 
 class serializableBookInfo:
     def __init__(self, id, title, author, genre, pages, description, cover, readers, rating):
@@ -19,7 +20,7 @@ class serializableBookInfo:
             serAuthors.append(serializableAuthor(a.id, a.name))
         self.author = serAuthors
 
-        self.genre = serializableGenre(genre.id, genre.name)
+        self.genre = serializableGenre(genre.id, genre.name,genre.color)
         self.pages = pages
         self.description = description
         self.number_of_readers = readers

@@ -7,6 +7,7 @@ class authorSerializer(serializers.Serializer):
 class genreSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     name = serializers.CharField()
+    color = serializers.IntegerField()
 
 class bookSerializer(serializers.Serializer):
     id = serializers.CharField()

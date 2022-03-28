@@ -1,4 +1,4 @@
-import stat
+from tokenize import group
 from rest_framework.response import Response
 from rest_framework import status
 from rest_framework.decorators import api_view, permission_classes
@@ -33,6 +33,32 @@ def getSerializableClubInfo(clubID):
 
     return serClub
 
+
+def modify_Group(data, club):
+    for key,val in data.items():
+        if key == 'name':
+            if  val == '':
+                return status.HTTP_406_NOT_ACCEPTABLE
+            if models.Club.objects.filter(~Q(id=club.id),name__iexact=val).exists():
+                return status.HTTP_409_CONFLICT
+            club.name = val
+        elif key == 'info':
+            club.info = val if val != "" else None
+        elif key == 'rules':
+            club.rules = val if val != "" else None
+        elif key == 'photo':
+            if models.Club.objects.filter(id=club.id).exists() and not 'group.png' in club.photoPath.name:
+                club.photoPath.delete()
+            ext = val.name.split('.')[-1]
+            val.name = '{:}.{:}'.format(club.id,ext)
+            club.photoPath = val
+            try:
+                im = Image.open(club.photoPath)
+                im.verify()
+            except:
+                return status.HTTP_406_NOT_ACCEPTABLE
+    return status.HTTP_200_OK
+
     
 
 @api_view(['POST'])
@@ -40,15 +66,18 @@ def getSerializableClubInfo(clubID):
 def createGroup(request):
     if 'name' not in request.data or request.data['name'] == '':
         return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-    if models.Club.objects.filter(name=request.data['name']).exists():
+    if models.Club.objects.filter(name__iexact=request.data['name']).exists():
         return Response(status=status.HTTP_409_CONFLICT)
     
     club = models.Club(name=request.data['name'])
     user = models.User.objects.get(id=request.user.id)
     user_club = models.User_Club(user=user,club=club,owner=True)
+    code = modify_Group(request.data,club)
+    if(code == status.HTTP_406_NOT_ACCEPTABLE or code == status.HTTP_409_CONFLICT):
+        return Response(status=code)
     club.save()
     user_club.save()
-    return Response(serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request}).data,status=status.HTTP_201_CREATED)
+    return Response(serializer.ClubSerializer(getSerializableClubInfo(club.id),many=False,context={'request': request}).data,status=status.HTTP_201_CREATED)
 
 
 @api_view(['GET'])
@@ -82,7 +111,7 @@ def leaveClub(request,id):
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     if not models.User_Club.objects.filter(club=id,user=user).exists():
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_409_CONFLICT)
     if not models.User_Club.objects.filter(club=id,user=user.id).exists():
         return Response(status=status.HTTP_403_FORBIDDEN)
     club_user = models.User_Club.objects.get(club=id,user=user)
@@ -98,7 +127,7 @@ def deleteGroup(request,id):
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     if not models.User_Club.objects.filter(club=id,user=user).exists():
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_403_FORBIDDEN)
     if not models.User_Club.objects.filter(club=id,user=user.id).exists():
         return Response(status=status.HTTP_403_FORBIDDEN)
     club_user = models.User_Club.objects.get(club=id,user=user)
@@ -136,7 +165,7 @@ def addBook(request,id):
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated,])
 def modifyGroup(request,id):
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
 
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -147,38 +176,20 @@ def modifyGroup(request,id):
         return Response(status=status.HTTP_403_FORBIDDEN)
     
     club = models.Club.objects.get(id=id)
-    for key,val in request.data.items():
-        if key == 'name':
-            if  val == '':
-                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
-            if models.Club.objects.filter(~Q(id=id),name__iexact=val).exists():
-                return Response(status=status.HTTP_409_CONFLICT)
-            club.name = val
-        elif key == 'info':
-            club.info = val if val != "" else None
-        elif key == 'rules':
-            club.rules = val if val != "" else None
-        elif key == 'photo':
-            club.photoPath.delete()
-            ext = val.name.split('.')[-1]
-            val.name = '{:}.{:}'.format(user.id,ext)
-            club.photoPath = val
-            try:
-                im = Image.open(club.photoPath)
-                im.verify()
-            except:
-                return Response(status=status.HTTP_406_NOT_ACCEPTABLE)
+    code = modify_Group(request.data,club)
+    if(code == status.HTTP_406_NOT_ACCEPTABLE or code == status.HTTP_409_CONFLICT):
+        return Response(status=code)
     club.save()
 
     return Response(serializer.ClubSerializer(getSerializableClubInfo(id),many=False,context={'request': request}).data)
 
-@api_view(['DeLETE'])
+@api_view(['DELETE'])
 @permission_classes([IsAuthenticated,])
 def removeMember(request,id):
-    user = models.userBasicInfo.objects.get(id=request.user.id)
+    user = models.User.objects.get(id=request.user.id)
     q = request.GET.get('q','')
 
-    if not models.userBasicInfo.objects.filter(id=q).exists():
+    if not models.User.objects.filter(id=q).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
     if not models.Club.objects.filter(id=id).exists():
         return Response(status=status.HTTP_404_NOT_FOUND)
@@ -189,7 +200,7 @@ def removeMember(request,id):
         return Response(status=status.HTTP_403_FORBIDDEN)
         
     if not models.User_Club.objects.filter(club=id,user=q).exists():
-        return Response(status=status.HTTP_404_NOT_FOUND)
+        return Response(status=status.HTTP_409_CONFLICT)
     if models.User_Club.objects.get(club=id,user=q).owner:
         return Response(status=status.HTTP_403_FORBIDDEN)
     models.User_Club.objects.filter(club=id,user=q).delete()

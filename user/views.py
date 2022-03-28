@@ -122,6 +122,7 @@ class BookList(APIView):
     def put(self, request, isbn):
         user = User.objects.get(id = request.user.id)
         q = request.GET.get('q', '')
+        q = q.lower()
         if q == '' or (not Status.objects.filter(status_text = q).exists() and q != 'recommend' and q != 'unrecommend'):   
             return Response(status = status.HTTP_406_NOT_ACCEPTABLE)                                                            #nebol zadany spravny {list}
         if not Book.objects.filter(id = isbn).exists():
