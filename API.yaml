@@ -1,0 +1,825 @@
+---
+openapi: 3.0.0
+info:
+  title: API volania pre knizny klub - backend
+  description: Definícia API zadania na predmet MTAA 2022 1.5.
+  version: 1.5.0-oas3
+servers:
+- url: /
+tags:
+- name: Prihlasovanie
+- name: Používateľ
+- name: Kluby
+- name: Search
+paths:
+  /auth/register/:
+    post:
+      tags:
+      - Prihlasovanie
+      summary: Zaregistruje použivateľa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginReq'
+        required: true
+      responses:
+        "201":
+          description: vytvorenie prebehlo v poriadku
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth'
+        "409":
+          description: vytvorenie zlyhalo - existujci používateľ
+  /auth/login/:
+    post:
+      tags:
+      - Prihlasovanie
+      summary: Prihlasenie používateľa
+      requestBody:
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginReq'
+        required: true
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Auth'
+        "401":
+          description: Prihlasenie zlyhalo
+  /user/info/:
+    get:
+      tags:
+      - Používateľ
+      summary: Základne informácie o užívateľovi
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userInfo'
+        "404":
+          description: user not found
+  /user/groups/:
+    get:
+      tags:
+      - Používateľ
+      summary: Skupiny pouzivatela
+      parameters:
+      - name: user_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/kluby'
+        "404":
+          description: user not found
+  /user/books/{list}/:
+    get:
+      tags:
+      - Používateľ
+      summary: kniznica pouzivatela
+      parameters:
+      - name: list
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/list'
+      - name: user_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/inline_response_200'
+        "404":
+          description: user not found
+        "406":
+          description: incorrect list
+  /user/modify/:
+    put:
+      tags:
+      - Používateľ
+      summary: zmenenie požuivateľských údajov
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/modifySchema'
+      responses:
+        "200":
+          description: update informacií o používatelovi
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "406":
+          description: prazdne pole DisplayName alebo photo nie je podporovany obrazok
+      security:
+      - bearerAuth: []
+  /user/book/{book_id}/:
+    put:
+      tags:
+      - Používateľ
+      summary: vloženie knihy do zoznamu
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/bookID'
+      - name: bookLists
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/bookLists'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: neexistujuca kniha
+        "406":
+          description: Neplatny prikaz
+        "409":
+          description: Kniha uz je v zozname
+      security:
+      - bearerAuth: []
+    delete:
+      tags:
+      - Používateľ
+      summary: odstranenie knihy zo zoznamu
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/bookID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/userInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: Neexistujuca kniha
+        "409":
+          description: Kniha nie je v zozname
+      security:
+      - bearerAuth: []
+  /group/create/:
+    post:
+      tags:
+      - Kluby
+      summary: vytvorenie noveho klubu
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/modifyForm'
+      responses:
+        "201":
+          description: podarilo sa vytvorit klub
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: neexistujuci pouzivatel
+        "406":
+          description: prázdne polia
+        "409":
+          description: klub už existuje
+      security:
+      - bearerAuth: []
+  /group/info/{club_id}/:
+    get:
+      tags:
+      - Kluby
+      summary: info o skupine
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "404":
+          description: group not found
+  /group/join/{club_id}/:
+    put:
+      tags:
+      - Kluby
+      summary: prihlasenie do skupiny
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: group/user not found
+        "409":
+          description: používateľ už je v skupine
+      security:
+      - bearerAuth: []
+  /group/delete/{club_id}/:
+    delete:
+      tags:
+      - Kluby
+      summary: vymazanie klubu
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: group/user not found
+        "403":
+          description: not the owner of the club
+      security:
+      - bearerAuth: []
+  /group/leave/{club_id}/:
+    delete:
+      tags:
+      - Kluby
+      summary: opustenie klubu
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: group/user not found
+        "403":
+          description: owner can't leave
+        "409":
+          description: user not in group
+      security:
+      - bearerAuth: []
+  /group/remove/{club_id}/:
+    delete:
+      tags:
+      - Kluby
+      summary: odstranenie člena z klubu
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      - name: user_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "403":
+          description: owner can't be removed, only owner can remove
+        "404":
+          description: group,user not found
+        "409":
+          description: používateľ nie je v skupine
+      security:
+      - bearerAuth: []
+  /group/book/{club_id}/:
+    put:
+      tags:
+      - Kluby
+      summary: nastavenie knihy ako knihy týždňa
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      - name: book_id
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          $ref: '#/components/schemas/ID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: group/book not found
+      security:
+      - bearerAuth: []
+  /group/modify/{club_id}/:
+    put:
+      tags:
+      - Kluby
+      summary: zmena údajov o klube
+      parameters:
+      - name: club_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/ID'
+      requestBody:
+        content:
+          multipart/form-data:
+            schema:
+              $ref: '#/components/schemas/modifyForm'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/clubInfo'
+        "401":
+          description: neautorizovaný používateľ
+        "404":
+          description: group not found
+        "406":
+          description: prázdne pole meno a neplatny format obrazka
+        "409":
+          description: nazov uz bol pouzity
+      security:
+      - bearerAuth: []
+  /find/groups/:
+    get:
+      tags:
+      - Search
+      summary: najde kluby s názvom obsahujúcim podstring
+      parameters:
+      - name: substring
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: name
+          example: Ha
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/findgroups'
+  /find/books/:
+    get:
+      tags:
+      - Search
+      summary: najde knihy s nazvom obsahujucim podstring
+      parameters:
+      - name: substring
+        in: query
+        required: true
+        style: form
+        explode: true
+        schema:
+          type: string
+          format: name
+          example: Ha
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/findbooks'
+  /find/info/{book_id}/:
+    get:
+      tags:
+      - Search
+      summary: najde knihy s nazvom obsahujúcim podstring
+      parameters:
+      - name: book_id
+        in: path
+        required: true
+        style: simple
+        explode: false
+        schema:
+          $ref: '#/components/schemas/bookID'
+      responses:
+        "200":
+          description: OK
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/bookinfo'
+        "404":
+          description: Book not found
+components:
+  schemas:
+    LoginReq:
+      required:
+      - name
+      - password
+      type: object
+      properties:
+        name:
+          type: string
+          format: name
+          example: jozkoMrkvicka
+        password:
+          type: string
+          format: password
+          example: pass
+    modifySchema:
+      type: object
+      properties:
+        displayName:
+          type: string
+          format: name
+          example: Jozko_Mrkva
+        bio:
+          type: string
+          format: name
+          example: Love books
+        photo:
+          type: string
+          format: binary
+    Auth:
+      properties:
+        user_id:
+          $ref: '#/components/schemas/ID'
+        token:
+          type: string
+          example: 2cf974fac210a818e40b02d0c42ad2736d5b703d
+    userInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        photoPath:
+          type: string
+        wishlist:
+          type: integer
+          format: int32
+        currently_reading:
+          type: integer
+          format: int32
+        completed:
+          type: integer
+          format: int32
+        recommended_books:
+          type: array
+          items:
+            $ref: '#/components/schemas/userInfo_recommended_books'
+        clubs:
+          $ref: '#/components/schemas/kluby'
+    kluby:
+      type: array
+      items:
+        $ref: '#/components/schemas/kluby_inner'
+    clubInfo:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        info:
+          type: string
+        rules:
+          type: string
+        photoPath:
+          type: string
+          format: nullable
+        count:
+          type: integer
+          format: int32
+        users:
+          type: array
+          items:
+            $ref: '#/components/schemas/clubInfo_users'
+        book_of_the_week:
+          $ref: '#/components/schemas/clubInfo_book_of_the_week'
+        book_count:
+          type: integer
+          format: int32
+        books:
+          type: array
+          items:
+            $ref: '#/components/schemas/clubInfo_book_of_the_week'
+    modifyForm:
+      type: object
+      properties:
+        displayName:
+          type: string
+          format: name
+          example: myClub
+        info:
+          type: string
+          format: name
+          example: dsa dasds adwd adwad wadaw da dasd daswd ads
+        rules:
+          type: string
+          format: name
+          example: dsa dasds adwd adwad wadaw da dasd daswd ads
+        photo:
+          type: string
+          format: binary
+    ID:
+      type: string
+      format: uuid
+      example: 123e4567-e89b-12d3-a456-426614174000
+    bookID:
+      type: string
+      format: isbn
+      example: "9783161484100"
+    bookLists:
+      type: string
+      example: wishlist
+      enum:
+      - wishlist
+      - reading
+      - completed
+      - recommend
+      - unrecommend
+    list:
+      type: string
+      example: wishlist
+      enum:
+      - wishlist
+      - reading
+      - completed
+    findbooks:
+      type: array
+      items:
+        $ref: '#/components/schemas/findbooks_inner'
+    findgroups:
+      type: array
+      items:
+        $ref: '#/components/schemas/findgroups_inner'
+    bookinfo:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "9781406379167"
+        title:
+          type: string
+          example: The Knife of Never Letting Go
+        author:
+          type: array
+          items:
+            $ref: '#/components/schemas/bookinfo_author'
+        genre:
+          $ref: '#/components/schemas/bookinfo_genre'
+        pages:
+          type: integer
+          format: int32
+          example: 496
+        description:
+          type: string
+          example: Prentisstown is not like other towns. Everyone can hear everyone else thoughts in a constant overwhelming Noise. There is no privacy. There are no secrets. Then Todd Hewitt unexpectedly stumbles on a spot of complete silence. Which is impossible. And now he is going to have to run…
+        cover:
+          type: string
+          example: http://host/data/books/knife.jpg
+        number_of_readers:
+          type: integer
+          format: int32
+          example: 1
+        rating:
+          type: integer
+          format: int32
+          example: 0
+    inline_response_200:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        description:
+          type: string
+        cover_path:
+          type: string
+    userInfo_recommended_books:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        cover_path:
+          type: string
+      example: null
+    kluby_inner:
+      type: object
+      properties:
+        id:
+          type: string
+        name:
+          type: string
+        number_of_members:
+          type: integer
+          format: int32
+        photoPath:
+          type: string
+          format: nullable
+    clubInfo_users:
+      type: object
+      properties:
+        id:
+          type: string
+        displayName:
+          type: string
+        photoPath:
+          type: string
+        owner:
+          type: boolean
+        joined:
+          type: string
+      example: null
+    clubInfo_book_of_the_week:
+      type: object
+      properties:
+        id:
+          type: string
+        title:
+          type: string
+        author:
+          type: array
+          items:
+            type: string
+        genre:
+          type: string
+        pages:
+          type: integer
+          format: int32
+        cover:
+          type: string
+      example: null
+    findbooks_inner:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "9780141350868"
+        title:
+          type: string
+          example: Half Bad
+        cover:
+          type: string
+          example: http://host/data/book/halfbad.jpg
+    findgroups_inner:
+      type: object
+      properties:
+        id:
+          type: string
+          example: 6bd983cc-eb35-47ee-afdb-0980664ed47d
+        name:
+          type: string
+          example: myClub
+        number_of_members:
+          type: integer
+          format: int32
+          example: 1
+        photoPath:
+          type: string
+          example: http://host/data/default/group.png
+    bookinfo_author:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "15"
+        name:
+          type: string
+          example: Patrik Ness
+      example: null
+    bookinfo_genre:
+      type: object
+      properties:
+        id:
+          type: string
+          example: "9"
+        name:
+          type: string
+          example: sci-fi
+        color:
+          type: integer
+          format: int32
+          example: 1550319615
+      example: null
+  responses:
+    Unauthorized:
+      description: neautorizovaný používateľ
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
