@@ -1,0 +1,15 @@
+{
+    "database": {
+        "host" : "127.0.0.1",
+        "port" : "5432",
+        "name" : "mtaa",
+        "user" : "postgres",
+        "pass" : "Televizia21"
+    },
+    "hosts" : [
+        "127.0.0.1",
+        "164.92.161.2Televizia21Televizia21"
+    ],
+    "salt" : "wwa0=fov@pm%ynid9ba0#un!8)3df5-cmng^+%6@j!4)s8ie9+"
+}
+

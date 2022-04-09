@@ -11,18 +11,20 @@ import os
 
 from django.core.asgi import get_asgi_application
 from channels.routing import ProtocolTypeRouter, URLRouter
-from channels.auth import AuthMiddlewareStack
-from channels.security.websocket import AllowedHostsOriginValidator
-from .middleware import TokenAuthMiddleware
-from video import routing
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'backend.settings')
+django_asgi_app = get_asgi_application()
+
+from channels.auth import AuthMiddlewareStack
+from channels.security.websocket import AllowedHostsOriginValidator
+from . import middleware
+from video import routing
 
 application = ProtocolTypeRouter(
     {
-        'http': get_asgi_application(),
+        'http': django_asgi_app,
         'websocket': AllowedHostsOriginValidator(
-            TokenAuthMiddleware(
+            middleware.TokenAuthMiddleware(
             URLRouter(
                 routing.websocket_urlpatterns
                 )
