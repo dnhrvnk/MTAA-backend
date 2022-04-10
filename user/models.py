@@ -4,7 +4,7 @@ class serializableUser:
     def __init__(self, id, displayName, bio, photoPath, wishlist, currently_reading, completed,recommended, clubs):
         self.id = id
         self.displayName = displayName
-        self.bio = bio[:100]
+        self.bio = bio
         self.photoPath = photoPath
         self.wishlist = wishlist
         self.currently_reading = currently_reading
