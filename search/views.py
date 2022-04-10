@@ -9,12 +9,10 @@ from search.models import *
 from user.views import serializeClubs, serializeRecommendedBooks
 from user.serializer import clubSerializer
 from search.serializer import bookFindSerializer
+import random
 
 def serializeBook(book):
-    if user_books.objects.filter(status=Status.objects.get(id = 3)).count() == 0:
-        rating = 0
-    else:
-        rating = user_books.objects.filter(recommended = True).count() / user_books.objects.filter(status=Status.objects.get(id = 3)).count() 
+    rating = round(random.uniform(1.00, 5.00), 2)
     readers = user_books.objects.filter(status=Status.objects.get(id = 2)).count() +  user_books.objects.filter(status=Status.objects.get(id = 3)).count()
 
     return serializableBookInfo(book.id, book.title, book.author, book.genre, book.pages, book.description, book.cover_path, readers, rating)
