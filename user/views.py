@@ -48,7 +48,7 @@ def serializeUser(user):
     completedC = user_books.objects.filter(user = user, status = Status.objects.get(id = 3)).count()
     recommendedBooks = serializeRecommendedBooks(user_books.objects.filter(user = user, recommended = True))
     clubs = serializeClubs(User_Club.objects.filter(user = user))
-    return serializableUser(user.id, user.displayName, user.photoPath, wishlistC, currently_readC, completedC, recommendedBooks, clubs)
+    return serializableUser(user.id, user.displayName, user.bio, user.photoPath, wishlistC, currently_readC, completedC, recommendedBooks, clubs)
 
 @api_view(['PUT'])
 @permission_classes([IsAuthenticated])

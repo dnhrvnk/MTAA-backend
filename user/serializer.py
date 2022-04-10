@@ -14,6 +14,7 @@ class clubSerializer(serializers.Serializer):
 class userSerializer(serializers.Serializer):
     id = serializers.UUIDField()
     displayName = serializers.CharField()
+    bio = serializers.CharField()
     photoPath = serializers.ImageField(use_url=True)
     wishlist = serializers.IntegerField()
     currently_reading = serializers.IntegerField()
